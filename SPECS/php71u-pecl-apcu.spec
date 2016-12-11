@@ -33,6 +33,9 @@ BuildRequires:  pcre-devel
 Requires:       php(zend-abi) = %{php_zend_api}
 Requires:       php(api) = %{php_core_api}
 
+Requires(post): pecl >= 1.10.0
+Requires(postun): pecl >= 1.10.0
+
 # provide the stock name
 Provides:       php-pecl-%{pecl_name} = %{version}
 Provides:       php-pecl-%{pecl_name}%{?_isa} = %{version}
@@ -204,6 +207,16 @@ popd
 %endif
 
 
+%post
+%{pecl_install} %{pecl_xmldir}/%{pecl_name}.xml >/dev/null || :
+
+
+%postun
+if [ $1 -eq 0 ]; then
+    %{pecl_uninstall} %{pecl_name} >/dev/null || :
+fi
+
+
 %files
 %license NTS/LICENSE
 %doc %{pecl_docdir}/%{pecl_name}
@@ -239,6 +252,7 @@ popd
 * Sun Dec 11 2016 Carl George <carl.george@rackspace.com> - 5.1.7-1.ius
 - Port from Fedora to IUS
 - Build with pear1u (via "pecl" virtual provides)
+- Re-add scriptlets (file triggers not yet available in EL)
 
 * Mon Nov 14 2016 Remi Collet <remi@fedoraproject.org> - 5.1.7-2
 - rebuild for https://fedoraproject.org/wiki/Changes/php71
