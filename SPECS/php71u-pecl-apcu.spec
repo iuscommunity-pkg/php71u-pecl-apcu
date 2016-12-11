@@ -1,3 +1,5 @@
+# IUS spec file for php71u-pecl-apcu, forked from:
+#
 # Fedora spec file for php-pecl-apcu
 #
 # Copyright (c) 2013-2016 Remi Collet
@@ -9,11 +11,12 @@
 %global pecl_name apcu
 %global with_zts  0%{?__ztsphp:1}
 %global ini_name  40-%{pecl_name}.ini
+%global php_base  php71u
 
-Name:           php-pecl-apcu
+Name:           %{php_base}-pecl-%{pecl_name}
 Summary:        APC User Cache
 Version:        5.1.7
-Release:        2%{?dist}
+Release:        1.ius%{?dist}
 Source0:        http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 Source1:        %{pecl_name}.ini
 Source2:        %{pecl_name}-panel.conf
@@ -23,18 +26,35 @@ License:        PHP
 Group:          Development/Languages
 URL:            http://pecl.php.net/package/APCu
 
-BuildRequires:  php-devel > 7
+BuildRequires:  %{php_base}-devel
 BuildRequires:  php-pear
 BuildRequires:  pcre-devel
 
 Requires:       php(zend-abi) = %{php_zend_api}
 Requires:       php(api) = %{php_core_api}
 
-Obsoletes:      php-apcu < 4.0.0-1
-Provides:       php-apcu = %{version}
-Provides:       php-apcu%{?_isa} = %{version}
-Provides:       php-pecl(apcu) = %{version}
-Provides:       php-pecl(apcu)%{?_isa} = %{version}
+# provide the stock name
+Provides:       php-pecl-%{pecl_name} = %{version}
+Provides:       php-pecl-%{pecl_name}%{?_isa} = %{version}
+
+# provide the stock and IUS names without pecl
+Provides:       php-%{pecl_name} = %{version}
+Provides:       php-%{pecl_name}%{?_isa} = %{version}
+Provides:       %{php_base}-%{pecl_name} = %{version}
+Provides:       %{php_base}-%{pecl_name}%{?_isa} = %{version}
+
+# provide the stock and IUS names in pecl() format
+Provides:       php-pecl(%{pecl_name}) = %{version}
+Provides:       php-pecl(%{pecl_name})%{?_isa} = %{version}
+Provides:       %{php_base}-pecl(%{pecl_name}) = %{version}
+Provides:       %{php_base}-pecl(%{pecl_name})%{?_isa} = %{version}
+
+# conflict with the stock name
+Conflicts:      php-pecl-%{pecl_name} < %{version}
+
+%{?filter_provides_in: %filter_provides_in %{php_extdir}/.*\.so$}
+%{?filter_provides_in: %filter_provides_in %{php_ztsextdir}/.*\.so$}
+%{?filter_setup}
 
 
 %description
@@ -42,35 +62,33 @@ APCu is userland caching: APC stripped of opcode caching.
 
 APCu only supports userland caching of variables.
 
-The %{?sub_prefix}php-pecl-apcu-bc package provides a drop
-in replacement for APC.
-
 
 %package devel
 Summary:       APCu developer files (header)
 Group:         Development/Libraries
 Requires:      %{name}%{?_isa} = %{version}-%{release}
-Requires:      php-devel%{?_isa}
-Obsoletes:     php-pecl-apc-devel < 4
-Provides:      php-pecl-apc-devel = %{version}-%{release}
-Provides:      php-pecl-apc-devel%{?_isa} = %{version}-%{release}
+Requires:      %{php_base}-devel%{?_isa}
+Provides:      php-pecl-%{pecl_name}-devel = %{version}
+Provides:      php-pecl-%{pecl_name}-devel%{?_isa} = %{version}
+Conflicts:     php-pecl-%{pecl_name}-devel < %{version}
+
 
 %description devel
 These are the files needed to compile programs using APCu.
 
 
-%package -n apcu-panel
+%package panel
 Summary:       APCu control panel
 Group:         Applications/Internet
 BuildArch:     noarch
 Requires:      %{name} = %{version}-%{release}
-Requires:      mod_php
-Requires:      php-gd
-Requires:      httpd
-Obsoletes:     apc-panel < 4
-Provides:      apc-panel = %{version}-%{release}
+Requires:      mod_%{php_base}
+Requires:      %{php_base}-gd
+Provides:      apcu-panel = %{version}
+Conflicts:     apcu-panel < %{version}
 
-%description -n apcu-panel
+
+%description panel
 This package provides the APCu control panel, with Apache
 configuration, available on http://localhost/apcu-panel/
 
@@ -81,7 +99,7 @@ mv %{pecl_name}-%{version} NTS
 
 sed -e '/LICENSE/s/role="doc"/role="src"/' -i package.xml
 
-cd NTS
+pushd NTS
 
 # Sanity check, really often broken
 extver=$(sed -n '/#define PHP_APCU_VERSION/{s/.* "//;s/".*$//;p}' php_apc.h)
@@ -89,7 +107,7 @@ if test "x${extver}" != "x%{version}"; then
    : Error: Upstream extension version is ${extver}, expecting %{version}.
    exit 1
 fi
-cd ..
+popd
 
 %if %{with_zts}
 # duplicate for ZTS build
@@ -102,20 +120,22 @@ sed -e s:apc.conf.php:%{_sysconfdir}/apcu-panel/conf.php:g \
 
 
 %build
-cd NTS
+pushd NTS
 %{_bindir}/phpize
 %configure \
    --enable-apcu \
    --with-php-config=%{_bindir}/php-config
 make %{?_smp_mflags}
+popd
 
 %if %{with_zts}
-cd ../ZTS
+pushd ZTS
 %{_bindir}/zts-phpize
 %configure \
    --enable-apcu \
    --with-php-config=%{_bindir}/zts-php-config
 make %{?_smp_mflags}
+popd
 %endif
 
 
@@ -155,20 +175,21 @@ done
 
 
 %check
-cd NTS
-%{_bindir}/php -n \
+pushd NTS
+%{__php} -n \
    -d extension=%{buildroot}%{php_extdir}/%{pecl_name}.so \
    -m | grep 'apcu'
 
 # Upstream test suite for NTS extension
-TEST_PHP_EXECUTABLE=%{_bindir}/php \
+TEST_PHP_EXECUTABLE=%{__php} \
 TEST_PHP_ARGS="-n -d extension=%{buildroot}%{php_extdir}/%{pecl_name}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
-%{_bindir}/php -n run-tests.php
+%{__php} -n run-tests.php
+popd
 
 %if %{with_zts}
-cd ../ZTS
+pushd ZTS
 %{__ztsphp} -n \
    -d extension=%{buildroot}%{php_ztsextdir}/%{pecl_name}.so \
    -m | grep 'apcu'
@@ -179,6 +200,7 @@ TEST_PHP_ARGS="-n -d extension=%{buildroot}%{php_ztsextdir}/%{pecl_name}.so" \
 NO_INTERACTION=1 \
 REPORT_EXIT_STATUS=1 \
 %{__ztsphp} -n run-tests.php
+popd
 %endif
 
 
@@ -205,7 +227,7 @@ REPORT_EXIT_STATUS=1 \
 %endif
 
 
-%files -n apcu-panel
+%files panel
 # Need to restrict access, as it contains a clear password
 %attr(550,apache,root) %dir %{_sysconfdir}/apcu-panel
 %config(noreplace) %{_sysconfdir}/apcu-panel/conf.php
@@ -214,6 +236,9 @@ REPORT_EXIT_STATUS=1 \
 
 
 %changelog
+* Sun Dec 11 2016 Carl George <carl.george@rackspace.com> - 5.1.7-1.ius
+- Port from Fedora to IUS
+
 * Mon Nov 14 2016 Remi Collet <remi@fedoraproject.org> - 5.1.7-2
 - rebuild for https://fedoraproject.org/wiki/Changes/php71
 
