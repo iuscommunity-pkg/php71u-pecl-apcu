@@ -160,6 +160,8 @@ install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{pecl_name}.xml
 # Pages
 install -D -m 644 -p NTS/apc.php  \
         %{buildroot}%{_datadir}/apcu-panel/index.php
+# Add apc.php to documentation for use with non-Apache webservers
+install -D -m 644 -p NTS/apc.php %{buildroot}%{pecl_docdir}/%{pecl_name}/apc.php
 # Apache config
 install -D -m 644 -p %{SOURCE2} \
         %{buildroot}%{_sysconfdir}/httpd/conf.d/apcu-panel.conf
@@ -254,6 +256,7 @@ fi
 - Build with pear1u (via "pecl" virtual provides)
 - Re-add scriptlets (file triggers not yet available in EL)
 - Install package.xml as %%{pecl_name}.xml, not %%{name}.xml
+- Include apc.php in %%{pecl_docdir} of main package
 
 * Mon Nov 14 2016 Remi Collet <remi@fedoraproject.org> - 5.1.7-2
 - rebuild for https://fedoraproject.org/wiki/Changes/php71
