@@ -27,7 +27,7 @@ Group:          Development/Languages
 URL:            http://pecl.php.net/package/APCu
 
 BuildRequires:  %{php_base}-devel
-BuildRequires:  php-pear
+BuildRequires:  pecl >= 1.10.0
 BuildRequires:  pcre-devel
 
 Requires:       php(zend-abi) = %{php_zend_api}
@@ -238,6 +238,7 @@ popd
 %changelog
 * Sun Dec 11 2016 Carl George <carl.george@rackspace.com> - 5.1.7-1.ius
 - Port from Fedora to IUS
+- Build with pear1u (via "pecl" virtual provides)
 
 * Mon Nov 14 2016 Remi Collet <remi@fedoraproject.org> - 5.1.7-2
 - rebuild for https://fedoraproject.org/wiki/Changes/php71
