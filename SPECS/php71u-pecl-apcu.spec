@@ -16,8 +16,8 @@
 
 Name:           %{php}-pecl-%{pecl_name}
 Summary:        APC User Cache
-Version:        5.1.9
-Release:        2.ius%{?dist}
+Version:        5.1.10
+Release:        1.ius%{?dist}
 Source0:        http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 Source1:        %{pecl_name}.ini
 Source2:        %{pecl_name}-panel.conf
@@ -261,6 +261,9 @@ fi
 
 
 %changelog
+* Fri Feb 16 2018 Ben Harper <ben.harper@rackspace.com> - 5.1.10-1.ius
+- Latest upstream
+
 * Wed Jan 31 2018 Carl George <carl@george.computer> - 5.1.9-2.ius
 - Remove pear requirement and update scriptlets (adapted from remirepo)
 
